@@ -236,9 +236,6 @@ app.controller('ViewPupilsCtrl', function ($scope, $http) {
             
             document.querySelector('#btn_date_after').click();
             document.querySelector('#LabelName').innerHTML = data[index].name_pupil;
-            document.querySelector('#thdifferent').innerHTML=data[index].difference+' $';
-            document.querySelector('#thprogress').innerHTML=(parseInt((parseInt(data[index].totalPupil)*100)/data[index].totalSlice))+" %";
-            document.querySelector('#thtotgen').innerHTML=data[index].totalSlice;
 
             var tablePay = $('#dataTables-paiement').DataTable({
                 destroy: true,
@@ -298,7 +295,7 @@ app.controller('ViewPupilsCtrl', function ($scope, $http) {
         // Update footer
         $( api.column( 3 ).footer() ).html(
            // '$'+pageTotal +' ( $'+ total +' total)'
-           total+ ' $'
+           total+ '$'
         );
 
 

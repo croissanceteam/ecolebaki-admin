@@ -1,5 +1,4 @@
 <?php
-<<<<<<< HEAD
 //session_start();
 require 'logger.php';
 
@@ -9,17 +8,6 @@ if (!empty($_POST['user']) && !empty($_POST['pwd']) && !empty($_POST['dblog'])) 
                  if (isset($_POST['user']) && isset($_POST['pwd']) && isset($_POST['dblog'])) {
                  $log=new logger();
                  $response=$log->getLogger($_POST['user'],$_POST['pwd'],$_POST['dblog']);
-=======
-session_start();
-require 'logger.php';
-
-function getLogger(){
-if (!empty($_POST['user']) && !empty($_POST['pwd'])) {
-
-                 if (isset($_POST['user']) && isset($_POST['pwd'])) {
-                 $log=new logger();
-                 $response=$log->getLogger($_POST['user'],$_POST['pwd']);
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
                  if (count($response)>0) {
 
                      $login=$response['login'];
@@ -42,14 +30,9 @@ if (!empty($_POST['user']) && !empty($_POST['pwd'])) {
                      $_SESSION['counter_agents']=sizeof($agents);
                      $_SESSION['agents']=$agents;
                      $_SESSION['years_list']=$years;
-<<<<<<< HEAD
                      $_SESSION['dblog']=$_POST['dblog'];
                     echo '<meta http-equiv="refresh" content=0;URL=viewdashboard>';
                     //echo $_SESSION['username'];
-=======
-                     echo '<meta http-equiv="refresh" content=0;URL=viewdashboard>';
-
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
                  }else{
                    return 0;
 
