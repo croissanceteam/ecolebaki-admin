@@ -1,7 +1,10 @@
 app.controller('ViewPupilsCtrl',function($scope,$http){
    // alert(document.querySelector('#lbl_year').innerHTML);
     $http.get('listyears').then(function(response){
+<<<<<<< HEAD
         console.log('Years :',response.data)
+=======
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
         $scope.list_years=response.data.splice(1);
         $scope.activeTab=response.data[0];
         console.log($scope.list_years);

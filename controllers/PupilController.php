@@ -1,4 +1,9 @@
 <?php
+<<<<<<< HEAD
+=======
+
+session_start();
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
 include_once 'db.php';
 
 class PupilController {
@@ -27,7 +32,11 @@ class PupilController {
 
     public static function countPupilsByPromo()
     {
+<<<<<<< HEAD
         $db = getDB($_SESSION['dblog']);
+=======
+        $db = getDB();
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
         $query = "SELECT pupil._MAT AS matr, sub._CODE_CLASS AS class, sub._CODE_SECTION AS section, sub._ANASCO AS anasco
                 FROM t_students pupil
                 JOIN t_subscription sub ON pupil._MAT=sub._MATR_PUPIL
@@ -136,7 +145,11 @@ class PupilController {
     }
 
     public static function getFees() {
+<<<<<<< HEAD
         $db = getDB($_SESSION['dblog']);
+=======
+        $db = getDB();
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
         $query = "SELECT * FROM t_school_fees WHERE _STATUS=:status";
         $query_execute = $db->prepare($query);
         $query_execute->execute
@@ -203,7 +216,11 @@ class PupilController {
 
     public static function reEnrolPupil($data) {
         $payGenerate = "PAY-" . time();
+<<<<<<< HEAD
         $db = getDB($_SESSION['dblog']);
+=======
+        $db = getDB();
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
         
         try {
 

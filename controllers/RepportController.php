@@ -1,5 +1,9 @@
 <?php
+<<<<<<< HEAD
 //session_start();
+=======
+session_start();
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
 //require_once './html2pdf/html2pdf.class.php';
 
 

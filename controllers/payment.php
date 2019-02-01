@@ -6,7 +6,11 @@
 ?>
 
 <?php
+<<<<<<< HEAD
     $db=getDB($_SESSION['dblog']);
+=======
+    $db=getDB();
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
     if (isset($_GET['_name'])){
         $name=$_GET['_name'];
         $anasco=$_GET['_anasco'];
@@ -60,7 +64,11 @@ if (isset($_GET['departement'])) {
           " JOIN t_subscription subscript ON pupils ._MAT=subscript._MATR_PUPIL".
           " WHERE payment._ANASCO=:year AND payment._OBJECT=:frais AND subscript._CODE_CLASS=:level AND subscript._CODE_SECTION=:option"
           ." AND payment._DEPARTMENT=:departement ORDER BY payment._DATEPAY DESC";
+<<<<<<< HEAD
     $db=getDB($_SESSION['dblog']);
+=======
+    $db=getDB();
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
     $sql_prepare=$db->prepare($Query);
     $sql_prepare->execute(
         array(
@@ -115,7 +123,11 @@ if ($_SERVER["REQUEST_METHOD"]=="POST") {
 
     $data=json_decode(file_get_contents("php://input"));
     $Query="SELECT * FROM t_students student WHERE student._NAME=:name";
+<<<<<<< HEAD
     $db=getDB($_SESSION['dblog']);
+=======
+    $db=getDB();
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
     $sql_prepare=$db->prepare($Query);
     $sql_prepare->execute(
         array(

@@ -86,12 +86,15 @@
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             Liste des élèves
+<<<<<<< HEAD
                             <div class="input-group" style="width:30%;float:right;margin-top:-.5em;">
                                 <input type="text" class="form-control" placeholder="Exemple: 2015-2016">
                                 <span class="input-group-btn">
                                     <button class="btn btn-primary" type="button"><i class="glyphicon glyphicon-search"></i></button>
                                 </span>
                                 </div>
+=======
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
                             <a style="float:right;margin:-.5em 0 0 1em" href="invoice" class="btn btn-primary hidden" id = "invoice">Dernier paiement <i class="fa fa-table"></i></a>
                             <a style="float:right;margin-top:-.5em" href="subscrit" class="btn btn-primary hidden">Liste des paiements <i class="fa fa-table"></i></a>
                         </div>
@@ -107,7 +110,10 @@
                             <hr/>
                             <!-- Tab panes -->
                             <div class="tab-content" >
+<<<<<<< HEAD
                             
+=======
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
                                 <div class="tab-pane fade in active" id="{{activeTab.year}}">
 
                                     <table width="100%" class="table table-striped table-bordered table-hover" id="dataTables-example">
@@ -118,7 +124,10 @@
                                                 <th>Genre</th>
                                                 <th>Classe</th>
                                                 <th>Section</th>
+<<<<<<< HEAD
                                                 <th>Categorie</th>
+=======
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
                                             </tr>
                                         </thead>
                                         <tbody style="cursor:pointer">
@@ -138,7 +147,10 @@
                                                 <th>Genre</th>
                                                 <th>Classe</th>
                                                 <th>Section</th>
+<<<<<<< HEAD
                                                 <th>Categorie</th>
+=======
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
                                             </tr>
                                         </thead>
                                         <tbody style="cursor:pointer">
@@ -160,7 +172,7 @@
             <a href="invoice" target="_blank"><button style="display:none;" id="invoice_link">Show invoice</button></a>
 
 
-            <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal fade" id="myModa l" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
@@ -172,7 +184,11 @@
                 <div class="col-lg-12">
                     <div class="panel panel-default">
                         <div class="panel-heading">
+<<<<<<< HEAD
                             Voir les paiements
+=======
+                            Enregistrer un paiement
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
 
                         </div>
                         <div class="panel-body">
@@ -188,7 +204,11 @@
                                         <input type="hidden" class="form-control" id="level" name="level" >
                                         <input type="hidden" class="form-control" id="section" name="section" >
                                             
+<<<<<<< HEAD
                                         <div class="form-group" style="display:none;">
+=======
+                                        <div class="form-group">
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
                                             
                                             <label for="slice">Type de frais</label>
                                             <select class="form-control" id="slice" name="slice" >
@@ -223,6 +243,7 @@
 
 
                                         </tbody>
+<<<<<<< HEAD
                                         <tfoot>
                                             <tr style="font-weight:lighter;">
                                                 <th colspan="3" style="text-align:left">Montant payé</th>
@@ -244,6 +265,8 @@
                                                 </th>
                                             </tr>
                                          </tfoot>
+=======
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
                                     </table>
 
                                 </div>
@@ -259,7 +282,11 @@
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-default" data-dismiss="modal">Annuler</button>
+<<<<<<< HEAD
                                             <button type="button" id="submitPayment" style="display:none;" class="btn btn-primary">Enregistrer</button>
+=======
+                                            <button type="button" id="submitPayment" class="btn btn-primary">Enregistrer</button>
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
                                         </div>
                                     </div>
                                     <!-- /.modal-content -->

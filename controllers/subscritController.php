@@ -1,5 +1,9 @@
 <?php
+<<<<<<< HEAD
 
+=======
+session_start();
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
 include_once 'db.php';
 include_once 'LoadPicture.php';
 
@@ -22,7 +26,11 @@ class SubscritController
         }else{
             $fileImage='avatar.png';
         }
+<<<<<<< HEAD
         $db=getDB($_SESSION['dblog']);
+=======
+        $db=getDB();
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
         $db->beginTransaction();
         $Query="INSERT INTO t_students (_MAT,_NAME,_SEX,_ADRESS,_PROVINCE,_BIRTHDAY,_BIRTHPLACE,_PHONE,_PICTURE)".
         " VALUES(:matr,:nom,:sex,:address,:province,:birthday,:birthplace,:phone,:picture)";
@@ -101,7 +109,11 @@ class SubscritController
        }
     }
     public function get_list_pupils($direction,$year){
+<<<<<<< HEAD
         $db=getDB($_SESSION['dblog']);
+=======
+        $db=getDB();
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
         $query_sql="SELECT DISTINCT(pupils._ID) AS id, pupils._MAT AS matricule,pupils._NAME AS name_pupil,pupils._SEX AS gender,subscrit._CODE_CLASS AS level,
         subscrit._CODE_SECTION AS section,pupils._PICTURE AS picture,pupils._PHONE AS phone, pupils._ADRESS AS adress, pupils._BIRTHDAY AS datenaiss,pupils._BIRTHPLACE as townBorn,pupils._PROVINCE AS townFrom
                     FROM t_students pupils JOIN t_payment payments
@@ -125,7 +137,11 @@ class SubscritController
     public function get_list_pupils_actuals(){
 
 
+<<<<<<< HEAD
         $db=getDB($_SESSION['dblog']);
+=======
+        $db=getDB();
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
         $query_sql="SELECT DISTINCT(pupils._ID) as id, pupils._MAT as matricule,UPPER(pupils._NAME) AS name_pupil,pupils._SEX AS gender,subscrit._CODE_CLASS AS level,subscrit._CODE_SECTION as section
                     FROM t_students pupils JOIN t_payment payments
                     ON pupils._MAT=payments._MATR JOIN t_subscription subscrit ON pupils._MAT=subscrit._MATR_PUPIL
@@ -146,7 +162,11 @@ class SubscritController
         echo $response;
     }
     public function get_list_years(){
+<<<<<<< HEAD
         $db=getDB($_SESSION['dblog']);
+=======
+        $db=getDB();
+>>>>>>> de858115e51748a912198fe39284ab8d201649f1
         $query="SELECT * FROM t_years_school ORDER BY year DESC LIMIT 0,3";
         $query_execute=$db->prepare($query);
         $query_execute->execute();
