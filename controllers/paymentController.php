@@ -1,9 +1,4 @@
 <?php
-<<<<<<< HEAD
-=======
-
-session_start();
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
 include_once 'db.php';
 
 class PaymentController {
@@ -29,7 +24,6 @@ class PaymentController {
                     JOIN t_school_fees sfees ON sfees._CODE = spay._CODE_FEES
                     WHERE spay._CODESLICE = ?";
     private static $getSliceSumPaidByPupil = "SELECT SUM(_AMOUNT) AS sum_slice_paid FROM t_payment WHERE _CODE_SLICE = ? AND _MATR = ?";
-<<<<<<< HEAD
     private static $reqSumTotalSliceByYear="SELECT SUM(_AMOUNT) as totalSlice FROM t_slice_payment WHERE _YEAR=:year";
     
     public static function getPupilsPaymentsList($direction, $year) {
@@ -44,11 +38,6 @@ class PaymentController {
                 )
         );
         $result= $query_execute->fetchAll(PDO::FETCH_OBJ);
-=======
-
-
-    public static function getPupilsPaymentsList($direction, $year) {
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
         $query_execute = queryDB(self::$reqGetPupilsPaymentsList,[
             'department' => $direction,
             'year' => $year
@@ -58,15 +47,12 @@ class PaymentController {
         for ($i = 0; $i < sizeof($data); $i++) {
             $matricule = $data[$i]->matricule;
             $pupil_payments_infos = queryDB(self::$reqGetPupilPaymentsInfos, ['matr' => $matricule, 'anasco' => '2017-2018']);
-<<<<<<< HEAD
             $sumPupilsArray=$pupil_payments_infos->fetchAll();
             $ctrPayPupil=0;
             for ($x=0; $x <sizeof($sumPupilsArray) ; $x++) { 
                 $ctrPayPupil+=$sumPupilsArray[$x]->amount_payed;
             }
            
-=======
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
             $pupil_infos[$i] = [
                 'id' => $data[$i]->id,
                 'matricule' => $matricule,
@@ -74,22 +60,17 @@ class PaymentController {
                 'gender' => $data[$i]->gender,
                 'level' => $data[$i]->level,
                 'section' => $data[$i]->section,
-<<<<<<< HEAD
                 'payinfo' => $sumPupilsArray,
                 'totalSlice'=>intval($result[0]->totalSlice),
                 'totalPupil'=>$ctrPayPupil,
                 'difference'=>intval($result[0]->totalSlice)-$ctrPayPupil,
                 'statut'=>(intval($result[0]->totalSlice)-$ctrPayPupil==0?'Solvable':'Insolvable')
-=======
-                'payinfo' => $pupil_payments_infos->fetchAll()
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
             ];
         }
 
         return json_encode($pupil_infos);
     }
     public static function getActualPupilsPaymentsList() {
-<<<<<<< HEAD
         $db = getDB($_SESSION['dblog']);
         
         $query_execute = $db->prepare(self::$reqSumTotalSliceByYear);
@@ -101,9 +82,6 @@ class PaymentController {
                 )
         );
         $result= $query_execute->fetchAll(PDO::FETCH_OBJ);
-=======
-
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
         $query_execute = queryDB(self::$reqGetActualPupilsPaymentsList, [
             'department' => $_SESSION['direction'],
             'year' => $_SESSION['anasco']
@@ -114,14 +92,11 @@ class PaymentController {
         for ($i = 0; $i < sizeof($data); $i++) {
             $matricule = $data[$i]->matricule;
             $pupil_payments_infos = queryDB(self::$reqGetPupilPaymentsInfos, ['matr' => $matricule, 'anasco' => $_SESSION['anasco']]);
-<<<<<<< HEAD
            $sumPupilsArray=$pupil_payments_infos->fetchAll();
            $ctrPayPupil=0;
            for ($x=0; $x <sizeof($sumPupilsArray) ; $x++) { 
                $ctrPayPupil+=$sumPupilsArray[$x]->amount_payed;
            }
-=======
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
             $array_paie[$i] = [
                 'id' => $data[$i]->id,
                 'matricule' => $matricule,
@@ -129,15 +104,11 @@ class PaymentController {
                 'gender' => $data[$i]->gender,
                 'level' => $data[$i]->level,
                 'section' => $data[$i]->section,
-<<<<<<< HEAD
                 'payinfo' => $sumPupilsArray,
                 'totalSlice'=>intval($result[0]->totalSlice),
                 'totalPupil'=>$ctrPayPupil,
                 'difference'=>intval($result[0]->totalSlice)-$ctrPayPupil,
                 'statut'=>(intval($result[0]->totalSlice)-$ctrPayPupil==0?'Solvable':'Insolvable')
-=======
-                'payinfo' => $pupil_payments_infos->fetchAll()
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
             ];
         }
         // echo 'Anne: '. $_SESSION['anasco'];
@@ -145,11 +116,7 @@ class PaymentController {
     }
 
     public function getFees() {
-<<<<<<< HEAD
         $db = getDB($_SESSION['dblog']);
-=======
-        $db = getDB();
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
         $query = "SELECT * FROM t_school_fees WHERE _STATUS=:status";
         $query_execute = $db->prepare($query);
         $query_execute->execute
@@ -163,11 +130,7 @@ class PaymentController {
     }
 
     public static function addPayment($data) {
-<<<<<<< HEAD
         $db = getDB($_SESSION['dblog']);
-=======
-        $db = getDB();
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
         $payGenerate = "PAY-" . time();
 
         $resultSliceInfos = queryDB(self::$reqGetSliceInfos, [$data['slice']]);
@@ -247,11 +210,7 @@ class PaymentController {
           JOIN t_subscription subscript ON pupils._MAT=subscript._MATR_PUPIL
           WHERE subscript._ANASCO=:year AND payment._ANASCO=:year ". $hasSlice ."AND subscript._CODE_CLASS=:level AND subscript._CODE_SECTION=:option
           AND payment._DEPARTMENT=:departement ORDER BY payment._DATEPAY DESC";
-<<<<<<< HEAD
         $db = getDB($_SESSION['dblog']);
-=======
-        $db = getDB();
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
         $sql_prepare = $db->prepare($Query);
         $sql_prepare->execute(
                 array(

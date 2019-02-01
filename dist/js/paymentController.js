@@ -50,7 +50,7 @@ app.controller('ViewPupilsCtrl', function ($scope, $http) {
 
                 var data = table.data();
                 var index = e.target._DT_CellIndex.row;
-                console.log('Data :',data)
+                console.log('Data d:',data)
                 document.querySelector('#thdifferent').innerHTML=data[index].difference+' $';
                 document.querySelector('#thprogress').innerHTML=(parseInt((parseInt(data[index].totalPupil)*100)/data[index].totalSlice))+" %";
                 document.querySelector('#thtotgen').innerHTML=data[index].totalSlice;
@@ -61,7 +61,7 @@ app.controller('ViewPupilsCtrl', function ($scope, $http) {
                 document.querySelector('#name_pupil').value = data[index].name_pupil;
                 document.querySelector('#level').value = data[index].level;
                 document.querySelector('#section').value = data[index].section;
-                document.querySelector('#add_payment_form').reset();
+               // document.querySelector('#add_payment_form').reset();
 
 
                 //------------------ I gotta get all payments of the current pupil ----------------

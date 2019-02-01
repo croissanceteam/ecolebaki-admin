@@ -83,7 +83,6 @@
                         <form role="form" method="post" name="frm" ng-submit="send()" id="form">
                             <fieldset>
                                 <div class="form-group">
-<<<<<<< HEAD
                                     <label for="user">Username:</label>
                                     <input id="user" class="form-control" placeholder="username" name="user" type="text" autofocus required ng-model="user.name">
                                 </div>
@@ -101,13 +100,6 @@
                                             <option>Yolo</option>
                                         </select>
                                 </div> 
-=======
-                                    <input class="form-control" placeholder="username" name="user" type="text" autofocus required ng-model="user.name">
-                                </div>
-                                <div class="form-group">
-                                    <input class="form-control" placeholder="Password" name="pwd" type="password" value="" required ng-model="user.password">
-                                </div>
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
                                 <div class="checkbox" style="display:none">
                                     <label>
                                         <input name="remember" type="checkbox" value="Remember Me">Remember Me

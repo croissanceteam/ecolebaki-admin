@@ -6,11 +6,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-<<<<<<< HEAD
                 <a id="title_navbar" class="navbar-brand" href="index.html">CS BAKI | <?php echo ucwords($_SESSION['direction'])?></a>
-=======
-                <a id="title_navbar" class="navbar-brand" href="index.html">CS BAKI | <? echo ucwords($_SESSION['direction'])?></a>
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
             </div>
             <!-- /.navbar-header -->
 
@@ -211,11 +207,7 @@
                         <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-user">
-<<<<<<< HEAD
                         <li><a href="#"><i class="fa fa-user fa-fw"></i><?php echo $_SESSION['uid'] ?></a>
-=======
-                        <li><a href="#"><i class="fa fa-user fa-fw"></i><? echo $_SESSION['uid'] ?></a>
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
                         </li>
                         <li style="display:none;"><a href="#"><i class="fa fa-gear fa-fw"></i> Settings</a>
                         </li>
@@ -247,11 +239,7 @@
                             <a href="viewdashboard"><i class="fa fa-dashboard fa-fw"></i> Tableau de bord</a>
                         </li>
                         <li>
-<<<<<<< HEAD
                             <a href="#"><i class="fa fa-graduation-cap fa-fw"></i> Audit des élèves<span class="fa arrow"></span></a>
-=======
-                            <a href="#"><i class="fa fa-graduation-cap fa-fw"></i> Gestion des élèves<span class="fa arrow"></span></a>
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
                             <ul class="nav nav-second-level">
                                 <li>
                                     <a href="viewpupils"><i class="fa fa-plus fa-fw"></i> Inscription</a>
@@ -266,11 +254,7 @@
                             <!-- /.nav-second-level -->
                         </li>
                         <li>
-<<<<<<< HEAD
                             <a href="#"><i class="fa fa-list-alt fa-fw"></i> Audit des rapports<span class="fa arrow"></span></a>
-=======
-                            <a href="#"><i class="fa fa-list-alt fa-fw"></i> Reporting<span class="fa arrow"></span></a>
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
                             <ul class="nav nav-second-level">
                                 <li>
                                     <a href="reportings-pay"><i class="fa fa-money fa-fw"></i> Paiements</a>

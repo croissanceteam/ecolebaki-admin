@@ -84,16 +84,12 @@
                     <div class="panel panel-default">
                         <div class="panel-heading">
                             Liste des élèves
-<<<<<<< HEAD
                             <div class="input-group" style="width:30%;float:right;margin-top:-.5em;">
                                 <input type="text" class="form-control" placeholder="Exemple: 2015-2016">
                                 <span class="input-group-btn">
                                     <button class="btn btn-primary" type="button"><i class="glyphicon glyphicon-search"></i></button>
                                 </span>
                                 </div>
-=======
-                            <a style="float:right;margin-top:-.5em" href="subscrit" class="btn btn-primary">Créer un nouvel élève <i class="fa fa-plus"></i></a>
->>>>>>> de858115e51748a912198fe39284ab8d201649f1
                         </div>
                         <!-- /.panel-heading -->
                         <div class="panel-body">
