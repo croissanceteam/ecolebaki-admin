@@ -18,44 +18,50 @@
             $pwrd=$pwd;
             $dblogger=$dblog;
             $db=getDB($dblog);
-            $QuerySlice="SELECT * FROM t_slice_payment";
-            $SQL_PREPARE=$db->prepare($QuerySlice);
-            $SQL_PREPARE->execute();
-            $SlicePayment=$SQL_PREPARE->fetchAll(PDO::FETCH_OBJ);
-            $Query="SELECT _MATR,_USERNAME,_PRIORITY,_CODE_DIRECTION,_ANASCO,_NAME FROM t_login login 
-                    JOIN t_agent agent ON login._MATR_AGENT=agent._MATR
-                    WHERE login._USERNAME=:userid AND login._PWD=:pwd";
-
-                   $SQL_PREPARE=$db->prepare($Query);
-                   $SQL_PREPARE->execute(array(
-                       "userid"=>$userid,
-                       "pwd"=>md5($pwd)
-                   ));
-                   $Login=$SQL_PREPARE->fetchAll(PDO::FETCH_OBJ);
-
-                   if (sizeof($Login)==1) {
-                    $_SESSION['dblog']=$dblog;
-                    $users=$this->getCounterStats($Login[0]->_CODE_DIRECTION);
-                    $pupils=$this->getPupils
-                    (
-                        $Login[0]->_CODE_DIRECTION,
-                        $Login[0]->_PRIORITY,
-                        $Login[0]->_ANASCO
-                    );
-                    $agents=$this->getAgents($Login[0]->_CODE_DIRECTION,$Login[0]->_PRIORITY);
-                       $logged=array
-                       (
-                        'login'=>$Login,
-                        'slices'=>$SlicePayment,
-                        'users'=>$users,
-                        'pupils'=>$pupils,
-                        'agents'=>$agents,
-                        'years'=>$this->getYears()
-                       );
-                   } else {
-                       return array();
-                   }
-                   return $logged;
+            if (gettype($db)!="NULL") {
+                $QuerySlice="SELECT * FROM t_slice_payment";
+                $SQL_PREPARE=$db->prepare($QuerySlice);
+                $SQL_PREPARE->execute();
+                $SlicePayment=$SQL_PREPARE->fetchAll(PDO::FETCH_OBJ);
+                $Query="SELECT _MATR,_USERNAME,_PRIORITY,_CODE_DIRECTION,_ANASCO,_NAME FROM t_login login 
+                        JOIN t_agent agent ON login._MATR_AGENT=agent._MATR
+                        WHERE login._USERNAME=:userid AND login._PWD=:pwd";
+    
+                       $SQL_PREPARE=$db->prepare($Query);
+                       $SQL_PREPARE->execute(array(
+                           "userid"=>$userid,
+                           "pwd"=>md5($pwd)
+                       ));
+                       $Login=$SQL_PREPARE->fetchAll(PDO::FETCH_OBJ);
+    
+                       if (sizeof($Login)==1) {
+                        $_SESSION['dblog']=$dblog;
+                        $users=$this->getCounterStats($Login[0]->_CODE_DIRECTION);
+                        $pupils=$this->getPupils
+                        (
+                            $Login[0]->_CODE_DIRECTION,
+                            $Login[0]->_PRIORITY,
+                            $Login[0]->_ANASCO
+                        );
+                        $agents=$this->getAgents($Login[0]->_CODE_DIRECTION,$Login[0]->_PRIORITY);
+                           $logged=array
+                           (
+                            'login'=>$Login,
+                            'slices'=>$SlicePayment,
+                            'users'=>$users,
+                            'pupils'=>$pupils,
+                            'agents'=>$agents,
+                            'years'=>$this->getYears()
+                           );
+                       } else {
+                           return array();
+                       }
+                       return $logged;
+            } else {
+              return [];
+            }
+            
+  
         }
         public function getCounterStats($direction){
             $db=getDB($_SESSION['dblog']);

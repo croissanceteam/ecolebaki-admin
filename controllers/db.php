@@ -17,12 +17,17 @@ function getDB($dblog) {
 			
 	}
 	//echo 'Database is :'.$dbname;
-	$dbhost="127.0.0.1";
-	$dbuser="root";
-	$dbpass="root";
-	$pdo = new PDO("mysql:host=$dbhost;dbname=$dbname", $dbuser, $dbpass,array(1002=> 'SET NAMES utf8'));
-	$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-	$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+	try {
+		$dbhost="127.0.0.1";
+		$dbuser="root";
+		$dbpass="root";
+		$pdo = new PDO("mysql:host=$dbhost;dbname=$dbname", $dbuser, $dbpass,array(1002=> 'SET NAMES utf8'));
+		$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+		$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+	} catch (Exception $th) {
+		return NULL;
+	}
+	
 	return $pdo;
 }
 
