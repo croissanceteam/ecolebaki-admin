@@ -241,13 +241,16 @@
                         <li>
                             <a href="#"><i class="fa fa-graduation-cap fa-fw"></i> Audit des élèves<span class="fa arrow"></span></a>
                             <ul class="nav nav-second-level">
-                                <li>
+                                <li style="display:none;">
                                     <a href="viewpupils"><i class="fa fa-plus fa-fw"></i> Inscription</a>
                                 </li>
                                 <li>
                                     <a href="viewpayments"><i class="fa fa-plus fa-fw"></i> Paiements</a>
                                 </li>
                                 <li>
+                                    <a href="#"><i class="fa fa-plus fa-fw"></i> Fraudes et modifications</a>
+                                </li>
+                                <li style="display:none;">
                                     <a href="reinscriptions"><i class="fa fa-plus fa-fw"></i> Réinscription</a>
                                 </li>
                             </ul>

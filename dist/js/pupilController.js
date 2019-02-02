@@ -51,7 +51,8 @@ app.controller('ViewPupilsCtrl',function($scope,$http){
                 var data = table.data();
                 var index=e.target._DT_CellIndex.row;
                 console.log(data);
-                // alert( 'You clicked on '+data[index].id+'\'s row' );
+                document.querySelector('#btn_date_after').click();
+                 alert( 'You clicked on '+data[index].id+'\'s row' );
 
         } );
 
