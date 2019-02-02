@@ -47,7 +47,7 @@ app.controller('ViewPupilsCtrl', function ($scope, $http) {
             });
 
             $('#dataTables-example tbody').on('click', 'tr', function (e) {
-
+               document.querySelector('#btn_date_after').click();
                 var data = table.data();
                 var index = e.target._DT_CellIndex.row;
                 console.log('Data d:',data)
@@ -55,7 +55,7 @@ app.controller('ViewPupilsCtrl', function ($scope, $http) {
                 document.querySelector('#thprogress').innerHTML=(parseInt((parseInt(data[index].totalPupil)*100)/data[index].totalSlice))+" %";
                 document.querySelector('#thtotgen').innerHTML=data[index].totalSlice;
                 $('#error_msg').html("");
-                document.querySelector('#btn_date_after').click();
+
                 document.querySelector('#LabelName').innerHTML = data[index].name_pupil;
                 document.querySelector('#mat_pupil').value = data[index].matricule;
                 document.querySelector('#name_pupil').value = data[index].name_pupil;
@@ -102,7 +102,7 @@ app.controller('ViewPupilsCtrl', function ($scope, $http) {
                     },
                     "footerCallback":function(row, data, start, end, display) {
                         var api = this.api(), data;
-     
+
                 // Remove the formatting to get integer data for summation
                         var intVal = function ( i ) {
                             return parseInt(i);
@@ -120,15 +120,15 @@ app.controller('ViewPupilsCtrl', function ($scope, $http) {
                 .reduce( function (a, b) {
                     return intVal(a) + intVal(b);
                 }, 0 );
-    
+
                 console.log('Total Tab:',total);
             // Update footer
             $( api.column( 3 ).footer() ).html(
                 //'$'+pageTotal +' ( $'+ total +' Total général)'
                 total+ ' $'
             );
-            
-    
+
+
             }
                 });
                 // alert( 'You clicked on '+data[index].id+'\'s row' );
@@ -233,7 +233,7 @@ app.controller('ViewPupilsCtrl', function ($scope, $http) {
             var data = table.data();
             var index = e.target._DT_CellIndex.row;
             console.log('Data: ',data[index]);
-            
+
             document.querySelector('#btn_date_after').click();
             document.querySelector('#LabelName').innerHTML = data[index].name_pupil;
 
@@ -272,7 +272,7 @@ app.controller('ViewPupilsCtrl', function ($scope, $http) {
                 },
                 "footerCallback":function(row, data, start, end, display) {
                     var api = this.api(), data;
- 
+
             // Remove the formatting to get integer data for summation
                     var intVal = function ( i ) {
                         return parseInt(i);
@@ -301,7 +301,7 @@ app.controller('ViewPupilsCtrl', function ($scope, $http) {
 
         }
             });
-        
+
 
         });
     }
@@ -383,7 +383,7 @@ app.controller('ViewPupilsCtrl', function ($scope, $http) {
         $('#slice').empty();
         $.ajax({
             url: 'loadslices',
-            data: 'getslices', 
+            data: 'getslices',
             dataType: 'json',
             success: function (json) {
                 $('#slice').append('<option value="">-------</option>');

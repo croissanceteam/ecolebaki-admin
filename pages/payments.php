@@ -107,7 +107,7 @@
                             <hr/>
                             <!-- Tab panes -->
                             <div class="tab-content" >
-                            
+
                                 <div class="tab-pane fade in active" id="{{activeTab.year}}">
 
                                     <table width="100%" class="table table-striped table-bordered table-hover" id="dataTables-example">
@@ -160,7 +160,7 @@
             <a href="invoice" target="_blank"><button style="display:none;" id="invoice_link">Show invoice</button></a>
 
 
-            <div class="modal fade" id="myModa l" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
@@ -187,9 +187,9 @@
                                         <input type="hidden" class="form-control" id="name_pupil" name="name_pupil" >
                                         <input type="hidden" class="form-control" id="level" name="level" >
                                         <input type="hidden" class="form-control" id="section" name="section" >
-                                            
+
                                         <div class="form-group" style="display:none;">
-                                            
+
                                             <label for="slice">Type de frais</label>
                                             <select class="form-control" id="slice" name="slice" >
                                                 <option value="">-----</option>
