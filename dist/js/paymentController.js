@@ -1,400 +1,322 @@
-app.controller('ViewPupilsCtrl', function ($scope, $http) {
-    // alert(document.querySelector('#lbl_year').innerHTML);
-    $http.get('listyears').then(function (response) {
-        $scope.list_years = response.data.splice(1);
-        $scope.activeTab = response.data[0];
-        console.log($scope.list_years);
-        $(document).ready(function () {
+app.controller('PaymentsCtrl', function ($scope, $http) {
 
-            var table = $('#dataTables-example').DataTable({
-                ajax: {
-                    url: "listpayments",
-                    dataSrc: '',
-                },
-
-                responsive: 'true',
-                columns: [
-
-                    {"data": "matricule"},
-                    {"data": "name_pupil"},
-                    {"data": "gender"},
-                    {"data": "level"},
-                    {"data": "section"},
-                    {"data": "statut"}
-                ],
-                "language": {
-                    "sProcessing": "Traitement en cours...",
-                    "sSearch": "Rechercher&nbsp;:",
-                    "sLengthMenu": "Afficher _MENU_ &eacute;l&eacute;ments",
-                    "sInfo": "Affichage de l'&eacute;l&eacute;ment _START_ &agrave; _END_ sur _TOTAL_ &eacute;l&eacute;ments",
-                    "sInfoEmpty": "Affichage de l'&eacute;l&eacute;ment 0 &agrave; 0 sur 0 &eacute;l&eacute;ment",
-                    "sInfoFiltered": "(filtr&eacute; de _MAX_ &eacute;l&eacute;ments au total)",
-                    "sInfoPostFix": "",
-                    "sLoadingRecords": "Chargement en cours...",
-                    "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
-                    "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
-                    "oPaginate": {
-                        "sFirst": "Premier",
-                        "sPrevious": "Pr&eacute;c&eacute;dent",
-                        "sNext": "Suivant",
-                        "sLast": "Dernier"
-                    },
-                    "oAria": {
-                        "sSortAscending": ": activer pour trier la colonne par ordre croissant",
-                        "sSortDescending": ": activer pour trier la colonne par ordre d&eacute;croissant"
-                    }
-                }
-            });
-
-            $('#dataTables-example tbody').on('click', 'tr', function (e) {
-               document.querySelector('#btn_date_after').click();
-                var data = table.data();
-                var index = e.target._DT_CellIndex.row;
-                console.log('Data d:',data)
-                document.querySelector('#thdifferent').innerHTML=data[index].difference+' $';
-                document.querySelector('#thprogress').innerHTML=(parseInt((parseInt(data[index].totalPupil)*100)/data[index].totalSlice))+" %";
-                document.querySelector('#thtotgen').innerHTML=data[index].totalSlice;
-                $('#error_msg').html("");
-
-                document.querySelector('#LabelName').innerHTML = data[index].name_pupil;
-                document.querySelector('#mat_pupil').value = data[index].matricule;
-                document.querySelector('#name_pupil').value = data[index].name_pupil;
-                document.querySelector('#level').value = data[index].level;
-                document.querySelector('#section').value = data[index].section;
-               // document.querySelector('#add_payment_form').reset();
+  $http.get('listyears').then(function (response) {
+    console.log('listyears : ',response.data);
+    $scope.years = response.data;
+    //for initialising the list by the first value : $scope.cbo_year = $scope.years[0];
+  }, function (error) {
+      console.log('Erreur ',error)
+  })
 
 
-                //------------------ I gotta get all payments of the current pupil ----------------
-                //console.log("List pay: ",JSON.stringify(data[index].payinfo));
+  $scope.hideLoader = true;
+  $scope.showCriteria = true;
 
-                var tablePay = $('#dataTables-paiement').DataTable({
-                    destroy: true,
-                    aaData: data[index].payinfo,
-                    responsive: true,
-                    aoColumns: [
-                        {"mDataProp": "id_pay"},
-                        {"mDataProp": "slice_pay"},
-                        {"mDataProp": "fee_object"},
-                        {"mDataProp": "amount_payed"},
-                        {"mDataProp": "date_pay"}
-                    ],
-                    "language": {
-                        "sProcessing": "Traitement en cours...",
-                        "sSearch": "Rechercher&nbsp;:",
-                        "sLengthMenu": "Afficher _MENU_ &eacute;l&eacute;ments",
-                        "sInfo": "Affichage de l'&eacute;l&eacute;ment _START_ &agrave; _END_ sur _TOTAL_ &eacute;l&eacute;ments",
-                        "sInfoEmpty": "Affichage de l'&eacute;l&eacute;ment 0 &agrave; 0 sur 0 &eacute;l&eacute;ment",
-                        "sInfoFiltered": "(filtr&eacute; de _MAX_ &eacute;l&eacute;ments au total)",
-                        "sInfoPostFix": "",
-                        "sLoadingRecords": "Chargement en cours...",
-                        "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
-                        "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
-                        "oPaginate": {
-                            "sFirst": "Premier",
-                            "sPrevious": "Pr&eacute;c&eacute;dent",
-                            "sNext": "Suivant",
-                            "sLast": "Dernier"
-                        },
-                        "oAria": {
-                            "sSortAscending": ": activer pour trier la colonne par ordre croissant",
-                            "sSortDescending": ": activer pour trier la colonne par ordre d&eacute;croissant"
-                        }
-                    },
-                    "footerCallback":function(row, data, start, end, display) {
-                        var api = this.api(), data;
+  $scope.currency = $('#currency').text();
 
-                // Remove the formatting to get integer data for summation
-                        var intVal = function ( i ) {
-                            return parseInt(i);
-                        };
-                         // Total over all pages
-                total = api
-                .column( 3 )
-                .data()
-                .reduce( function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0 );
-                pageTotal = api
-                .column( 3, { page: 'current'} )
-                .data()
-                .reduce( function (a, b) {
-                    return intVal(a) + intVal(b);
-                }, 0 );
+  var now = moment();
+  var startMonth = moment('2019-01-01','YYYY-MM-DD');
 
-                console.log('Total Tab:',total);
-            // Update footer
-            $( api.column( 3 ).footer() ).html(
-                //'$'+pageTotal +' ( $'+ total +' Total général)'
-                total+ ' $'
-            );
+  var nbrmonths = moment().diff(startMonth,'months');
+  console.log('Nombre des mois écoulés :',nbrmonths);
+
+  var monthsArray = []; //declare un tableau avec un 1er item vide
+  for (var i = 1; i <= nbrmonths ; i++) {
+    //I add objects into my array
+    monthsArray[i] = {
+        'month' : moment().subtract(i,'month').format('MMMM YYYY')
+    };
+  }
+  monthsArray.shift(); //supprime le 1er item
+  console.log('tableau :',monthsArray);
+  $scope.months = monthsArray;
 
 
+  $scope.periodicityChanged = function(){
+    // console.log('Périodicité :',$scope.cbo_periodicity);
+    dayField = document.getElementById('datepickerdiv');
+    monthField = document.getElementById('monthlistdiv');
+    if($scope.cbo_periodicity == 'daily'){
+      dayField.className = 'form-group col-sm-4 show-day';
+      monthField.className = 'form-group col-sm-4 hide-day';
+      document.getElementById('month').selectedIndex = -1;
+      // alert($('#month option:selected').text());
+    }else{
+      dayField.className = 'form-group col-sm-4 hide-day';
+      monthField.className = 'form-group col-sm-4 show-day';
+      document.getElementById('day').value = "";
+    }
+    $scope.showResults = false;
+  }
+  $scope.criteriaChanged = function(){
+    $scope.showResults = false;
+  }
+
+  $scope.sendRequestTab = function () {
+
+    var day = ($('#day').val()).trim();
+    var month = $('#month option:selected').text();
+    // console.log('cbo_periodicity :',$scope.cbo_periodicity);
+    // console.log('cbo_month :',$scope.cbo_month);
+    console.log('day :',day);
+    $scope.reportTitle = "";
+    if($scope.cbo_year != undefined && $scope.cbo_periodicity != undefined && (month != "" || day != "")){
+      $scope.hideLoader = false;
+      $scope.showCriteria = false;
+      $scope.income = 0;
+      if(month != ""){
+          $scope.reportTitle = "RECETTE MENSUELLE";
+          $scope.labelTotal = "TOTAL MENSUEL";
+          $scope.period = month;
+          console.log($scope.reportTitle);
+          var startOfMonth = moment(month,'MMMM YYYY').startOf('month').format('YYYY-MM-DD');
+          var endOfMonth = moment(month,'MMMM YYYY').endOf('month').format('YYYY-MM-DD');
+          console.log(startOfMonth,endOfMonth);
+          var url = "getmonthlyincome/" + startOfMonth + "/" + endOfMonth + "/" + $scope.cbo_year.year;
+          console.log('URL :',url);
+          $http.get(url).then(function (response) {
+            console.log('withError :',response.data.withError);
+            console.log('Data :',response.data);
+            $scope.hideLoader = true;
+            $scope.showCriteria = true;
+            if(response.data.withError || response.data.withError == undefined){
+              alertify.error('Impossible de recupérer les données.');
+            }else{
+              // $scope.income = parseFloat(response.data.totalGlobal).toFixed(2);
+              // console.log(typeof(response.data.totalGlobal));
+              $scope.income = $scope.formatMoney(response.data.totalGlobal);
+              // $scope.totalPayByTerm = response.data.totalbyTerm;
+              var payTab = response.data.totalbyTerm;
+              $scope.totalPayByTerm = [];
+              angular.forEach(response.data.totalbyTerm,function(value,key){
+                $scope.totalPayByTerm[key] = {
+                  'recette' : $scope.formatMoney(value.recette),
+                  'trim' : value.trim
+                };
+              });
+              // console.log(payTab);
+              $scope.payTable = response.data.payLines;
+              if(response.data.totalGlobal == null || response.data.totalGlobal == 0){
+                alertify.alert('Aucun paiement retrouvé en <span style="font-weight:bold">' + month + '</span> pour l\'année scolaire <span style="font-weight:bold">' + $scope.cbo_year.year + '</span>');
+              }else{
+                $scope.showResults = true;
+              }
             }
-                });
-                // alert( 'You clicked on '+data[index].id+'\'s row' );
 
+          }, function (error) {
+              console.log('Error :',error);
 
-            });
-
-
-
-        });//end of document ready
-
-        document.querySelector('#loader').style = "display:none";
-        document.querySelector('#tableView').style = "display:normal";
-    }, function (error) {
-        console.error(error)
-    });
-
-    var table = undefined;
-    var iTable;
-    $scope.get_list_pupils = function (year, index) {
-
-
-        var title_navbar = document.querySelector('#title_navbar');
-        title_navbar = title_navbar.innerHTML.split('|')[1].trim();
-        //alert(title_navbar);
-        console.log('Navbar :',title_navbar);
-        // var url_get_list = 'listpupils/' + title_navbar + '/SUB/' + year;
-        var url_get_list = 'listpayments/' + title_navbar + '/' + year;
-        console.log('URL 1:', url_get_list);
-        $(document).ready(function () {
-
-            if (table == undefined)
-            {
-                iTable = index;
-                $scope.toFillTable(index, url_get_list);
-
-            } else {
-                if (index == iTable) {
-                    table.destroy();
-                    $scope.toFillTable(index, url_get_list);
-
-                } else {
-
-                }
+          });
+      } else if(day != "") {
+          var correctday = moment(day,'DD/MM/YYYY').format('YYYY-MM-DD');
+          console.log('day formated:',correctday);
+          $scope.reportTitle = "RECETTE JOURNALIERE";
+          $scope.labelTotal = "TOTAL JOURNALIER";
+          $scope.period = day;
+          console.log($scope.reportTitle);
+          var url = 'getdailyincome/' + correctday + '/' + $scope.cbo_year.year;
+          console.log('URL :',url);
+          $http.get(url).then(function (response) {
+            console.log('withError :',response.data.withError);
+            console.log('Data :',response.data);
+            $scope.hideLoader = true;
+            $scope.showCriteria = true;
+            if(response.data.withError || response.data.withError == undefined){
+              alertify.error('Impossible de recupérer les données.');
+            }else{
+              // $scope.income = parseFloat(response.data.totalGlobal).toFixed(2);
+              $scope.income = $scope.formatMoney(parseFloat(response.data.totalGlobal));
+              // $scope.totalPayByTerm = response.data.totalbyTerm;
+              var payTab = response.data.totalbyTerm;
+              $scope.totalPayByTerm = [];
+              angular.forEach(response.data.totalbyTerm,function(value,key){
+                $scope.totalPayByTerm[key] = {
+                  'recette' : $scope.formatMoney(value.recette),
+                  'trim' : value.trim
+                };
+              });
+              $scope.payTable = response.data.payLines;
+              $scope.hideLoader = true;
+              $scope.showCriteria = true;
+              if(response.data.totalGlobal == null || response.data.totalGlobal == 0){
+                alertify.alert('Aucun paiement retrouvé à la date du <span style="font-weight:bold">' + day + '</span> pour l\'année scolaire <span style="font-weight:bold">' + $scope.cbo_year.year + '</span>');
+              }else{
+                $scope.showResults = true;
+              }
             }
 
 
-        });
+          }, function (error) {
+              console.log('Error :',error);
+          });
+      }
+
+    } else {
+      console.log('Mauvais');
+      alertify.alert('Veuillez remplir tous les critères d\'édition');
     }
 
+  }
+  $scope.getInsolvents = function(){
+    if($scope.cbo_year != undefined || $scope.cbo_class != undefined || $scope.cbo_trim != undefined){
+      $scope.hideLoader = false;
+      $scope.showCriteria = false;
+      $scope.reportTitle = "LISTE DES INSOLVABLES";
+      var promotion = $scope.cbo_promotion.toString().trim().split(" ");
+      var level = promotion[0].substring(0, 1);
+      var option = promotion[1];
+      var termSplited = $scope.cbo_trim.toString().trim().split(" ");
+      var term = termSplited[0].substring(0, 1)+'TRIM';
+      console.log(term);
+      var url = 'getinsolventslist/'+ $scope.cbo_year.year +'/'+ level + '/' + option + '/' + term;
+      $http.get(url).then(function (response){
+        console.log('Response :',response.data);
+        $scope.hideLoader = true;
+        $scope.showCriteria = true;
+        if(response.data.withError || response.data.withError == undefined){
+          alertify.error('Il y a une petite erreur. Veuillez contacter l\'administrateur.');
+        }else{
+          $scope.amountopay = response.data.termAmount;
+          $scope.insolventList = response.data.insolventList;
+          $scope.pupilsCounter = response.data.pupilsCounter;
+          $scope.insolventsCounter = response.data.insolventsCounter;
+          if ($scope.pupilsCounter == 0) {
+            alertify.alert('Cette classe n\'a aucun élève');
+          }else if($scope.insolventsCounter == 0){
+            alertify.alert('Cette classe est en ordre pour le trimestre sélectonné');
+          }else{
+            $scope.totalPaid = 0;
+            $scope.totalRemaining = 0;
+            angular.forEach(response.data.insolventList,function(value,key){
+              $scope.totalPaid += parseFloat(value.sumpaid);
+              $scope.totalRemaining += parseFloat(value.remaining);
+            });
 
-    $scope.toFillTable = function (index, url) {
-        $http.get(url).then(function (response) {
-            console.log(response.data);
-        }, function (error) {
-            console.log(error)
-        })
-
-        table = $('#dataTables' + index).DataTable({
-            ajax: {
-                url: url,
-                dataSrc: '',
-
-            },
-
-            responsive: 'true',
-            columns: [
-
-                {"data": "matricule"},
-                {"data": "name_pupil"},
-                {"data": "gender"},
-                {"data": "level"},
-                {"data": "section"},
-                {"data": "statut"}
-            ],
-            "language": {
-                "sProcessing": "Traitement en cours...",
-                "sSearch": "Rechercher&nbsp;:",
-                "sLengthMenu": "Afficher _MENU_ &eacute;l&eacute;ments",
-                "sInfo": "Affichage de l'&eacute;l&eacute;ment _START_ &agrave; _END_ sur _TOTAL_ &eacute;l&eacute;ments",
-                "sInfoEmpty": "Affichage de l'&eacute;l&eacute;ment 0 &agrave; 0 sur 0 &eacute;l&eacute;ment",
-                "sInfoFiltered": "(filtr&eacute; de _MAX_ &eacute;l&eacute;ments au total)",
-                "sInfoPostFix": "",
-                "sLoadingRecords": "Chargement en cours...",
-                "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
-                "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
-                "oPaginate": {
-                    "sFirst": "Premier",
-                    "sPrevious": "Pr&eacute;c&eacute;dent",
-                    "sNext": "Suivant",
-                    "sLast": "Dernier"
-                },
-                "oAria": {
-                    "sSortAscending": ": activer pour trier la colonne par ordre croissant",
-                    "sSortDescending": ": activer pour trier la colonne par ordre d&eacute;croissant"
-                }
+            if ($scope.totalPaid == 0) {
+              alertify.alert('Aucun élève de cette classe n\'a payé pour ce trimestre');
+            }else {
+              $scope.totalPaid = $scope.formatMoney($scope.totalPaid);
+              $scope.totalRemaining = $scope.formatMoney($scope.totalRemaining);
+              $scope.showResults = true;
             }
-        });
 
-
-        $('#dataTables' + index + ' tbody').on('click', 'tr', function (e) {
-            var data = table.data();
-            var index = e.target._DT_CellIndex.row;
-            console.log('Data: ',data[index]);
-
-            document.querySelector('#btn_date_after').click();
-            document.querySelector('#LabelName').innerHTML = data[index].name_pupil;
-
-            var tablePay = $('#dataTables-paiement').DataTable({
-                destroy: true,
-                aaData: data[index].payinfo,
-                responsive: true,
-                aoColumns: [
-                    {"mDataProp": "id_pay"},
-                    {"mDataProp": "slice_pay"},
-                    {"mDataProp": "fee_object"},
-                    {"mDataProp": "amount_payed"},
-                    {"mDataProp": "date_pay"}
-                ],
-                "language": {
-                    "sProcessing": "Traitement en cours...",
-                    "sSearch": "Rechercher&nbsp;:",
-                    "sLengthMenu": "Afficher _MENU_ &eacute;l&eacute;ments",
-                    "sInfo": "Affichage de l'&eacute;l&eacute;ment _START_ &agrave; _END_ sur _TOTAL_ &eacute;l&eacute;ments",
-                    "sInfoEmpty": "Affichage de l'&eacute;l&eacute;ment 0 &agrave; 0 sur 0 &eacute;l&eacute;ment",
-                    "sInfoFiltered": "(filtr&eacute; de _MAX_ &eacute;l&eacute;ments au total)",
-                    "sInfoPostFix": "",
-                    "sLoadingRecords": "Chargement en cours...",
-                    "sZeroRecords": "Aucun &eacute;l&eacute;ment &agrave; afficher",
-                    "sEmptyTable": "Aucune donn&eacute;e disponible dans le tableau",
-                    "oPaginate": {
-                        "sFirst": "Premier",
-                        "sPrevious": "Pr&eacute;c&eacute;dent",
-                        "sNext": "Suivant",
-                        "sLast": "Dernier"
-                    },
-                    "oAria": {
-                        "sSortAscending": ": activer pour trier la colonne par ordre croissant",
-                        "sSortDescending": ": activer pour trier la colonne par ordre d&eacute;croissant"
-                    }
-                },
-                "footerCallback":function(row, data, start, end, display) {
-                    var api = this.api(), data;
-
-            // Remove the formatting to get integer data for summation
-                    var intVal = function ( i ) {
-                        return parseInt(i);
-                    };
-                     // Total over all pages
-            total = api
-            .column( 3 )
-            .data()
-            .reduce( function (a, b) {
-                return intVal(a) + intVal(b);
-            }, 0 );
-            pageTotal = api
-            .column( 3, { page: 'current'} )
-            .data()
-            .reduce( function (a, b) {
-                return intVal(a) + intVal(b);
-            }, 0 );
-
-            console.log('Total Tab:',total);
-        // Update footer
-        $( api.column( 3 ).footer() ).html(
-           // '$'+pageTotal +' ( $'+ total +' total)'
-           total+ '$'
-        );
-
+          }
 
         }
-            });
+      }, function (error) {
+          console.log('Error :',error);
+          alertify.error('Il y a une petite erreur. Veuillez contacter l\'administrateur.');
+      });
 
-
-        });
+    }else{
+      console.log('Mauvais');
+      alertify.alert('Veuillez remplir tous les critères d\'édition');
     }
+  }
+  $scope.getReport = function(){
+    if($scope.cbo_year != undefined || $scope.cbo_class != undefined || $scope.cbo_trim != undefined || $scope.cbo_report){
+      $scope.hideLoader = false;
+      $scope.showCriteria = false;
 
-    $scope.requestHttp = function (url, method, callback) {
-        if (method == 'GET') {
-            $http.get(url).then(function (response) {
-                callback(response);
-            }, function (error) {
-                callback(response);
-            });
-        } else {
+      switch ($scope.cbo_report) {
+        case 'solde':
+          $scope.reportTitle = "LISTE DES ELEVES EN ORDRE DE PAIEMENT";
+          break;
+        case 'partiel':
+          $scope.reportTitle = "LISTE DES ELEVES AYANT PAYE AU MOINS UN ACOMPTE";
+          break;
+        default:
+          $scope.reportTitle = "LISTE DES ELEVES N'AYANT RIEN PAYE";
+          break;
+      }
 
-        }
-    }
-
-    $(document).on('click', '#submitPayment', function () {
-
-        var matricule = $('#mat_pupil').val();
-        var slice = $('#slice').val();
-        var amount = $('#amount').val();
-        var mydata = $('#add_payment_form').serialize();
-        if (slice == "" && amount == "") {
-            $('#error_msg').html("Veuillez renseigner le type de frais et le montant");
-        } else if (slice == "") {
-            $('#error_msg').html("Veuillez renseigner le type de frais");
-        } else if (amount == "") {
-            $('#error_msg').html("Veuillez renseigner le montant");
-        } else {
-            $('#error_msg').html("");
-            /** reset the form here */
-            $('#add_payment_form')[0].reset();
-
-            /** end reset the form here */
-
-
-            $.ajax({
-                type: 'POST',
-                url: 'addpayment',
-                data: mydata,
-                success: function (result) {
-                    console.log("result");
-                    console.log(result);
-                    document.querySelector('#btn_date_after').click();
-
-                    if (result == 1) {
-                        $('#success_alert').html("Paiement effectué!");
-                        document.querySelector('#success_alert').style = "display:normal";
-                        document.querySelector("#invoice").click();
-                        //window.location.href = "invoice";
-                        //window.open("http://localhost/~jonathan/ecolebaki2/invoice");
-                        setTimeout(function () {
-                            window.location.reload();
-                        }, 2000);
-                    } else {
-                        $('#danger_alert').html("L'opération a échoué!");
-                        document.querySelector('#danger_alert').style = "display:normal";
-                        setTimeout(function () {
-                            document.getElementById('danger_alert').style = "display:none";
-                        }, 2000);
-                    }
-
-                },
-                error: function () {
-                    $('#danger_alert').html("L'opération n'a pas abouti!");
-                    document.querySelector('#danger_alert').style = "display:normal";
-                    setTimeout(function () {
-                        document.getElementById('danger_alert').style = "display:none";
-                    }, 2000);
-                }
-
+      var promotion = $scope.cbo_promotion.toString().trim().split(" ");
+      var level = promotion[0].substring(0, 1);
+      var option = promotion[1];
+      var termSplited = $scope.cbo_trim.toString().trim().split(" ");
+      var term = termSplited[0].substring(0, 1)+'TRIM';
+      console.log(term);
+      var url = 'payreport/'+ $scope.cbo_year.year +'/'+ level + '/' + option + '/' + term +'/'+ $scope.cbo_report;
+      $http.get(url).then(function (response){
+        console.log('Response :',response.data);
+        $scope.hideLoader = true;
+        $scope.showCriteria = true;
+        if(response.data.withError || response.data.withError == undefined){
+          alertify.error('Il y a une petite erreur. Veuillez contacter l\'administrateur.');
+        }else{
+          $scope.amountopay = response.data.termAmount;
+          $scope.pupilList = response.data.pupilList;
+          $scope.totalPupils = response.data.totalPupils;
+          $scope.pupilFound = response.data.pupilFound;
+          if ($scope.totalPupils == 0) {
+            alertify.alert('Cette classe n\'a aucun élève');
+          }else{
+            $scope.totalPaid = 0;
+            $scope.totalRemaining = 0;
+            angular.forEach(response.data.pupilList,function(value,key){
+              $scope.totalPaid += parseFloat(value.sumpaid);
+              $scope.totalRemaining += parseFloat(value.remaining);
             });
 
-        }
-        return false;
-    });
-
-    function fillSlicesList() {
-        $('#slice').empty();
-        $.ajax({
-            url: 'loadslices',
-            data: 'getslices',
-            dataType: 'json',
-            success: function (json) {
-                $('#slice').append('<option value="">-------</option>');
-                $.each(json, function (index, value) {
-                    $('#slice').append('<option value="' + index + '" label="' + value + '">' + value + '</option>');
-                });
+            if ($scope.totalPaid == 0 && $scope.pupilFound == 0 && $scope.cbo_report == 'solde') {
+              alertify.alert('Aucun élève de cette classe n\'a soldé pour ce trimestre');
+            }else if ($scope.totalPaid == 0 && $scope.pupilFound == 0 && $scope.cbo_report == 'partiel') {
+              alertify.alert('Aucun élève de cette classe n\'a payé en partie pour ce trimestre');
+            }else if ($scope.totalPaid == 0 && $scope.pupilFound == 0 && $scope.cbo_report == 'aucun') {
+              alertify.alert('Tous les élèves de cette classe ont au moins payé quelque chose pour ce trimestre');
+            }else if ($scope.totalPaid == 0 && $scope.pupilFound == $scope.totalPupils && $scope.cbo_report == 'aucun') {
+              alertify.alert('Tous n\'ont rien payé pour ce trimestre');
+            }else{
+              $scope.totalPaid = $scope.formatMoney($scope.totalPaid);
+              $scope.totalRemaining = $scope.formatMoney($scope.totalRemaining);
+              $scope.showResults = true;
             }
-        });
-    }
-    fillSlicesList();
-    function showInvoice() {
 
+          }
+
+        }
+      }, function (error) {
+          console.log('Error :',error);
+          alertify.error('Il y a une petite erreur. Veuillez contacter l\'administrateur.');
+      });
+
+    }else{
+      console.log('Mauvais');
+      alertify.alert('Veuillez remplir tous les critères d\'édition');
     }
+  }
+  $scope.seePrintView = function (){
+    // $scope.reportTitle = $scope.reportTitle.toUpperCase();
+    document.getElementById('menuBar').style.display="none";
+    $scope.showCriteria = false;
+    $scope.showResults = false;
+    $scope.showPrintView = true;
+  }
+  $scope.print=function(){
+      document.querySelector('#btnprint').style.display="none";
+      document.querySelector('#btnqprint').style.display="none";
+      window.print();
+      window.location.reload();
+
+  }
+  $scope.quitPrint = function(){
+      window.location.reload();
+  }
+  $scope.formatMoney = function(amount, currency = $scope.currency, decimalCount = 2, decimal = ".", thousands = " ") {
+      try {
+          decimalCount = Math.abs(decimalCount);
+          decimalCount = isNaN(decimalCount) ? 2 : decimalCount;
+
+          //const negativeSign = amount < 0 ? "-" : "";
+
+          let i = parseInt(amount = Math.abs(Number(amount) || 0).toFixed(decimalCount)).toString();
+          let j = (i.length > 3) ? i.length % 3 : 0;
+
+          return currency + ' ' + (j ? i.substr(0, j) + thousands : '') + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + thousands) + (decimalCount ? decimal + Math.abs(amount - i).toFixed(decimalCount).slice(2) : "");
+      } catch (e) {
+          console.log('format money error :',e);
+      }
+  }
+
+
 });

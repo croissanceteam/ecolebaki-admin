@@ -1,141 +1,109 @@
 
 <?php
-    include_once 'db.php';
-    $uid='';
-    $pwrd='';
-    $dblogger='';
-?>
+    include_once 'BaseController.php';
 
-<?php
-    class Logger{
+    class Logger extends BaseController {
         private $db;
         private $logged="";
-  
-
 
         public function getLogger($userid,$pwd,$dblog){
-            $uid=$userid;
-            $pwrd=$pwd;
-            $dblogger=$dblog;
-            $db=getDB($dblog);
+            $_SESSION['dblog']=$dblog;
+            $db = parent::db();
             if (gettype($db)!="NULL") {
-                $QuerySlice="SELECT * FROM t_slice_payment";
-                $SQL_PREPARE=$db->prepare($QuerySlice);
-                $SQL_PREPARE->execute();
-                $SlicePayment=$SQL_PREPARE->fetchAll(PDO::FETCH_OBJ);
-                $Query="SELECT _MATR,_USERNAME,_PRIORITY,_CODE_DIRECTION,_ANASCO,_NAME FROM t_login login 
-                        JOIN t_agent agent ON login._MATR_AGENT=agent._MATR
-                        WHERE login._USERNAME=:userid AND login._PWD=:pwd";
-    
-                       $SQL_PREPARE=$db->prepare($Query);
-                       $SQL_PREPARE->execute(array(
-                           "userid"=>$userid,
-                           "pwd"=>md5($pwd)
-                       ));
-                       $Login=$SQL_PREPARE->fetchAll(PDO::FETCH_OBJ);
-    
-                       if (sizeof($Login)==1) {
-                        $_SESSION['dblog']=$dblog;
-                        $users=$this->getCounterStats($Login[0]->_CODE_DIRECTION);
-                        $pupils=$this->getPupils
-                        (
-                            $Login[0]->_CODE_DIRECTION,
-                            $Login[0]->_PRIORITY,
-                            $Login[0]->_ANASCO
-                        );
-                        $agents=$this->getAgents($Login[0]->_CODE_DIRECTION,$Login[0]->_PRIORITY);
-                           $logged=array
-                           (
-                            'login'=>$Login,
-                            'slices'=>$SlicePayment,
-                            'users'=>$users,
-                            'pupils'=>$pupils,
-                            'agents'=>$agents,
-                            'years'=>$this->getYears()
-                           );
-                       } else {
-                           return array();
-                       }
-                       return $logged;
-            } else {
+              $req = "SELECT _MATR,_USERNAME,_PWD AS password,_PRIORITY,_CODE_DIRECTION,_ANASCO,_NAME,_LOCKED AS locked FROM t_login login
+                      JOIN t_agent agent ON login._MATR_AGENT=agent._MATR
+                      WHERE login._USERNAME=?";
+
+              $Login = queryDB($req,[$userid])->fetch();
+
+              switch ($Login->locked) {
+                case 0:
+                  if ($Login && password_verify($pwd, $Login->password)) {
+
+                      $QueryTerm = "SELECT * FROM t_terms WHERE _ANASCO = ?";
+                      $SQL_PREPARE = $db->prepare($QueryTerm);
+                      $SQL_PREPARE->execute([$Login->_ANASCO]);
+                      $TermPayment = $SQL_PREPARE->fetchAll();
+
+                      $users = $this->getCounterStats($Login->_CODE_DIRECTION);
+                      $pupils = $this->getPupils($Login->_CODE_DIRECTION, $Login->_PRIORITY, $Login->_ANASCO);
+                      $agents = $this->getAgents($Login->_CODE_DIRECTION, $Login->_PRIORITY);
+                      $logged = array
+                          (
+                          'login' => $Login,
+                          'terms' => $TermPayment,
+                          'users' => $users,
+                          'pupils' => $pupils,
+                          'agents' => $agents,
+                          'years' => $this->getYears()
+                      );
+                  } else {
+                      return false;
+                  }
+                  return $logged;
+
+                  break;
+
+                default:
+                  return 'locked';
+                  break;
+              }
+            }else{
               return [];
             }
-            
-  
+
         }
         public function getCounterStats($direction){
-            $db=getDB($_SESSION['dblog']);
-            $Query="SELECT _MATR,_USERNAME,_PRIORITY,_CODE_DIRECTION,_ANASCO FROM t_login ".
-            " login JOIN t_agent agent ON login._MATR_AGENT=agent._MATR".
-            " WHERE agent._CODE_DIRECTION=:direction";
-            $sql=$db->prepare($Query);
-            $sql->execute
-            (
-                array
-                (
-                    'direction'=>$direction
-                )
-            );
-            $response=$sql->fetchAll(PDO::FETCH_OBJ);
-            return $response;
 
-
+          $Query = "SELECT _MATR,_USERNAME,_PRIORITY,_CODE_DIRECTION,_ANASCO FROM t_login
+                    login JOIN t_agent agent ON login._MATR_AGENT=agent._MATR
+                    WHERE agent._CODE_DIRECTION=:direction";
+          $sql = parent::db()->prepare($Query);
+          $sql->execute(['direction' => $direction]);
+          $response = $sql->fetchAll();
+          return $response;
         }
 
         public function getPupils($direction,$priority,$anasco){
-            $db=getDB($_SESSION['dblog']);
-            $Query="SELECT DISTINCT(students._MAT),students._NAME,students._SEX,students._PICTURE 
+            $Query="SELECT DISTINCT(students._MAT),students._NAME,students._SEX,students._PICTURE
                     FROM t_students students
                     JOIN t_payment pay ON students._MAT=pay._MATR
                     WHERE pay._DEPARTMENT = :direction AND pay._ANASCO = :anasco";
             // " GROUP BY students._MAT";
-            $sql=$db->prepare($Query);
+            $sql=parent::db()->prepare($Query);
             $sql->execute([
                 'direction'=>$direction,
                 'anasco'=>$anasco
             ]);
-            $response=$sql->fetchAll(PDO::FETCH_OBJ);
+            $response=$sql->fetchAll();
 
             return $response;
         }
 
         public function getAgents($direction,$priority){
-            $db=getDB($_SESSION['dblog']);
+            $db=parent::db();
             switch ($priority) {
                 case 'user':
                     $Query="SELECT * FROM t_agent WHERE _CODE_DIRECTION=:direction";
                     $sql=$db->prepare($Query);
-                    $sql->execute
-                    (
-                        array
-                        (
-                            'direction'=>$direction
-                        )
-                    );
-                    $response=$sql->fetchAll(PDO::FETCH_OBJ);
+                    $sql->execute(['direction'=>$direction]);
+                    $response=$sql->fetchAll();
                     break;
 
                 default:
                     $Query="SELECT * FROM t_agent WHERE _CODE_DIRECTION=:direction";
                     $sql=$db->prepare($Query);
-                    $sql->execute
-                    (
-                        array
-                        (
-                            'direction'=>$direction
-                        )
-                    );
-                    $response=$sql->fetchAll(PDO::FETCH_OBJ);
+                    $sql->execute(['direction'=>$direction]);
+                    $response=$sql->fetchAll();
                 break;
             }
             return $response;
         }
         public function getYears(){
-            $db=getDB($_SESSION['dblog']);
             $query="SELECT * FROM t_years_school ORDER BY year DESC";
-            $query_execute=$db->prepare($query);
+            $query_execute=parent::db()->prepare($query);
             $query_execute->execute();
-            $response=$query_execute->fetchAll(PDO::FETCH_OBJ);
+            $response=$query_execute->fetchAll();
             return $response;
         }
     }

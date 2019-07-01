@@ -1,10 +1,10 @@
 <?php
-$test="yolo";
-define('__INSTANCES__',$instanceDB= array(
-	'yolo' => 'db_baki', 
+
+define('__INSTANCES__',[
+	'yolo' => 'db_baki',
 	'ndjili' => 'db_baki_2',
 	'kimbanseke' => 'db_baki_3'
-));
+]);
 
 
 function getDB($dblog) {
@@ -13,21 +13,20 @@ function getDB($dblog) {
 		if(strtolower($dblog)==$key){
 			$dbname=$data;
 		}
-			
-			
 	}
-	//echo 'Database is :'.$dbname;
+	
 	try {
 		$dbhost="127.0.0.1";
 		$dbuser="root";
-		$dbpass="root";
+		$dbpass="";
 		$pdo = new PDO("mysql:host=$dbhost;dbname=$dbname", $dbuser, $dbpass,array(1002=> 'SET NAMES utf8'));
 		$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
-	} catch (Exception $th) {
+
+	} catch (\Exception $th) {
 		return NULL;
 	}
-	
+
 	return $pdo;
 }
 

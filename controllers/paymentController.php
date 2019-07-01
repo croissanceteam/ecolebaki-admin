@@ -1,260 +1,388 @@
 <?php
-include_once 'db.php';
+include_once 'BaseController.php';
 
-class PaymentController {
+class PaymentController extends BaseController {
 
-    private static $reqGetPupilPaymentsInfos = "SELECT pay._IDPAY AS id_pay, spay._LABELSLICE AS slice_pay, sfees._LABEL AS fee_object, pay._AMOUNT AS amount_payed, pay._DATEPAY AS date_pay
-                    FROM t_payment pay
-                    JOIN t_school_fees sfees ON pay._OBJECT=sfees._CODE
-                    JOIN t_slice_payment spay ON spay._CODESLICE=pay._CODE_SLICE
-                    WHERE pay._MATR=:matr AND pay._ANASCO=:anasco";
-    private static $reqGetActualPupilsPaymentsList = "SELECT DISTINCT(pupils._ID) AS id, pupils._MAT AS matricule,UPPER(pupils._NAME) AS name_pupil,pupils._SEX AS gender,subscrit._CODE_CLASS AS level,subscrit._CODE_SECTION AS section
-                    FROM t_students pupils
-                    JOIN t_payment payments ON pupils._MAT=payments._MATR
-                    JOIN t_subscription subscrit ON pupils._MAT=subscrit._MATR_PUPIL
-                    WHERE payments._DEPARTMENT=:department AND subscrit._ANASCO=:year";
-    private static $reqGetPupilsPaymentsList = "SELECT DISTINCT(pupils._ID) AS id, pupils._MAT AS matricule,UPPER(pupils._NAME) AS name_pupil,pupils._SEX AS gender,subscrit._CODE_CLASS AS level,subscrit._CODE_SECTION AS section, subscrit._ANASCO
-                    FROM t_students pupils
-                    JOIN t_payment payments ON pupils._MAT=payments._MATR
-                    JOIN t_subscription subscrit ON pupils._MAT=subscrit._MATR_PUPIL
-                    WHERE payments._DEPARTMENT=:department AND subscrit._ANASCO=:year";
-    private static $reqInsertPay = "INSERT INTO t_payment (_IDPAY,_MATR,_CODE_SLICE,_OBJECT,_DATEPAY,_TIMEPAY,_AMOUNT,_ANASCO,_USER_AGENT,_DEPARTMENT)
-                    VALUES(:idpay,:matr,:codeslice,:objectpay,:datepay,:timepay,:amount,:anasco,:user,:department)";
-    private static $reqGetSliceInfos = "SELECT spay.*, sfees._LABEL AS _OBJECT_PAY FROM t_slice_payment spay
-                    JOIN t_school_fees sfees ON sfees._CODE = spay._CODE_FEES
-                    WHERE spay._CODESLICE = ?";
-    private static $getSliceSumPaidByPupil = "SELECT SUM(_AMOUNT) AS sum_slice_paid FROM t_payment WHERE _CODE_SLICE = ? AND _MATR = ?";
-    private static $reqSumTotalSliceByYear="SELECT SUM(_AMOUNT) as totalSlice FROM t_slice_payment WHERE _YEAR=:year";
-    
-    public static function getPupilsPaymentsList($direction, $year) {
-        $db = getDB($_SESSION['dblog']);
-        
-        $query_execute = $db->prepare(self::$reqSumTotalSliceByYear);
-        $query_execute->execute
-                (
-                array
-                    (
-                    'year' => $_SESSION['anasco']
-                )
-        );
-        $result= $query_execute->fetchAll(PDO::FETCH_OBJ);
-        $query_execute = queryDB(self::$reqGetPupilsPaymentsList,[
-            'department' => $direction,
-            'year' => $year
+  /*
+  * get all updates on payments during a specific day
+  *
+  */
+  public function getDaylyPayUpdates($day,$year,$direction){
+    try {
+      $db = parent::db();
+      $db->beginTransaction();
+
+      $query = "SELECT pl.*, p._MATR,p._DATEPAY FROM _payments_listenner pl JOIN t_payment p ON p._IDPAY=pl._payment_id
+                WHERE pl._updated_at = :day AND p._ANASCO = :anasco AND p._DEPARTMENT = :direction";
+      $query_execute = $db->prepare($query);
+      $query_execute->execute([
+        'day'       => $day,
+        'anasco'    => $year,
+        'direction' => $direction
+      ]);
+
+      $queryPayLines = "SELECT pupil._MAT AS matricule,UPPER(pupil._NAME) AS pupil_name, pay._IDPAY AS id_pay, term._LABELTERM AS term,pay._AMOUNT AS amount_payed, LOWER(CONCAT(sub._CODE_CLASS,'è ',sub._CODE_SECTION)) AS class,agent._NAME AS percepteur
+                      FROM t_students pupil JOIN t_subscription sub ON pupil._MAT=sub._MATR_PUPIL
+                      JOIN t_payment pay ON pay._MATR=pupil._MAT
+                      JOIN t_terms term ON term._CODETERM=pay._CODETERM
+                      JOIN t_login user ON user._USERNAME=pay._USER_AGENT
+                      JOIN t_agent agent ON agent._MATR=user._MATR_AGENT
+                      WHERE _datepay = :day AND pay._anasco = :anasco AND pay._department = :direction";
+      $execPayLines = $db->prepare($queryPayLines);
+      $execPayLines->execute([
+        'day'       => $day,
+        'anasco'    => $year,
+        'direction' => $direction
+      ]);
+      $PayLines = $execPayLines->fetchAll();
+
+      $totalGlobal = 0;
+      $response = [];
+      $label = "";
+      while ($data = $query_execute->fetch()) {
+        $totalGlobal += $data->recette;
+        if($data->trimestre == "1TRIM")
+          $label = "Premier trimestre";
+        elseif($data->trimestre == "2TRIM")
+          $label = "Deuxième trimestre";
+        elseif($data->trimestre == "3TRIM")
+          $label = "Troisième trimestre";
+        $response[] = [
+          'recette'   =>  $data->recette,
+          'trim'      =>  $label
+        ];
+      }
+
+      $db->commit();
+
+      return json_encode([
+        'totalGlobal'    =>  $totalGlobal,
+        'totalbyTerm'    =>  $response,
+        'payLines'  =>  $PayLines,
+        'withError'  =>  false,
+      ]);
+
+    } catch (\Exception $e) {
+      $db->rollBack();
+      return json_encode([
+        'content' =>  $e->getMessage(),
+        'withError'  =>  true
+      ]);
+    }
+  }
+
+  public function getPayReport($year,$level,$option,$term,$report,$direction)
+  {
+    try {
+      $db = parent::db();
+      $db->beginTransaction();
+
+
+      $queryPupils = "SELECT student._MAT,student._NAME FROM t_students student
+      JOIN t_subscription sub ON sub._MATR_PUPIL=student._MAT
+      WHERE sub._ANASCO = :anasco AND sub._CODE_CLASS = :level AND sub._CODE_SECTION = :option AND sub._DEPARTMENT = :department AND student._STATUS = 1";
+      $pupils = $db->prepare($queryPupils);
+      $pupils->execute([
+        'anasco'       => $year,
+        'level'    => $level,
+        'option' => $option,
+        'department' => $direction
+      ]);
+
+      $queryTerm = "SELECT _AMOUNT FROM t_terms WHERE _CODETERM = :term AND _ANASCO = :anasco";
+      $termAmount = $db->prepare($queryTerm);
+      $termAmount->execute([ 'term' => $term, 'anasco' => $year]);
+      // $dataTerm = $termAmount->fetch();
+      $amount = $termAmount->fetch()->_AMOUNT;
+
+      $queryPay = "SELECT SUM(_AMOUNT) AS somme FROM t_payment WHERE _MATR = :mat AND _ANASCO = :anasco AND _CODETERM = :term AND _DEPARTMENT = :department";
+      $pupilList = [];
+      $totalPupils = 0;
+
+      if($report == 'solde'){
+        while ($pupil = $pupils->fetch()) {
+          $pay = $db->prepare($queryPay);
+          $pay->execute([
+            'mat'         =>  $pupil->_MAT,
+            'anasco'      =>  $year,
+            'term'        =>  $term,
+            'department'  =>  $direction
+          ]);
+          $res = $pay->fetch()->somme;
+          $paid = ($res == null) ? 0 : $res;
+          if($amount == $paid){
+            $pupilList[] = [
+              'matricule' =>  $pupil->_MAT,
+              'pupilname' =>  $pupil->_NAME,
+              'sumpaid'   =>  $paid,
+              'remaining' =>  bcsub($amount,$paid,2)
+            ];
+          }
+          $totalPupils++;
+        }
+      }else if($report == 'partiel'){
+        while ($pupil = $pupils->fetch()) {
+          $pay = $db->prepare($queryPay);
+          $pay->execute([
+            'mat'         =>  $pupil->_MAT,
+            'anasco'      =>  $year,
+            'term'        =>  $term,
+            'department'  =>  $direction
+          ]);
+          $res = $pay->fetch()->somme;
+          $paid = ($res == null) ? 0 : $res;
+          if($paid > 0 && $paid < $amount){
+            $pupilList[] = [
+              'matricule' =>  $pupil->_MAT,
+              'pupilname' =>  $pupil->_NAME,
+              'sumpaid'   =>  $paid,
+              'remaining' =>  bcsub($amount,$paid,2)
+            ];
+          }
+          $totalPupils++;
+        }
+      }else {
+        while ($pupil = $pupils->fetch()) {
+          $pay = $db->prepare($queryPay);
+          $pay->execute([
+            'mat'         =>  $pupil->_MAT,
+            'anasco'      =>  $year,
+            'term'        =>  $term,
+            'department'  =>  $direction
+          ]);
+          $res = $pay->fetch()->somme;
+          $paid = ($res == null) ? 0 : $res;
+          if($paid == 0){
+            $pupilList[] = [
+              'matricule' =>  $pupil->_MAT,
+              'pupilname' =>  $pupil->_NAME,
+              'sumpaid'   =>  $paid,
+              'remaining' =>  bcsub($amount,$paid,2)
+            ];
+          }
+          $totalPupils++;
+        }
+      }
+      $db->commit();
+
+      return json_encode([
+        'pupilList' =>  $pupilList,
+        'termAmount' =>  $amount,
+        'pupilFound' =>  sizeof($pupilList),
+        'totalPupils' =>  $totalPupils,
+        'withError'  =>  false
+      ]);
+
+    } catch (\Exception $e) {
+      $db->rollBack();
+      return json_encode([
+        'exception' =>  $e->getMessage(),
+        'line' =>  $e->getLine(),
+        'withError'  =>  true
+      ]);
+    }
+
+  }
+
+  public function getInsolvents($year,$level,$option,$term,$direction)
+  {
+    try {
+      $db = parent::db();
+      $db->beginTransaction();
+      $queryPupils = "SELECT student._MAT,student._NAME FROM t_students student
+      JOIN t_subscription sub ON sub._MATR_PUPIL=student._MAT
+      WHERE sub._ANASCO = :anasco AND sub._CODE_CLASS = :level AND sub._CODE_SECTION = :option AND sub._DEPARTMENT = :department AND student._STATUS = 1";
+      $pupils = $db->prepare($queryPupils);
+      $pupils->execute([
+        'anasco'       => $year,
+        'level'    => $level,
+        'option' => $option,
+        'department' => $direction
+      ]);
+
+      $queryTerm = "SELECT _AMOUNT FROM t_terms WHERE _CODETERM = :term AND _ANASCO = :anasco";
+      $termAmount = $db->prepare($queryTerm);
+      $termAmount->execute([ 'term' => $term, 'anasco' => $year]);
+      // $dataTerm = $termAmount->fetch();
+      $amount = $termAmount->fetch()->_AMOUNT;
+
+      $queryPay = "SELECT SUM(_AMOUNT) AS somme FROM t_payment WHERE _MATR = :mat AND _ANASCO = :anasco AND _CODETERM = :term AND _DEPARTMENT = :department";
+      $insolventList = [];
+      $pupilsCounter = 0;
+      while ($pupil = $pupils->fetch()) {
+        $pay = $db->prepare($queryPay);
+        $pay->execute([
+          'mat'         =>  $pupil->_MAT,
+          'anasco'      =>  $year,
+          'term'        =>  $term,
+          'department'  =>  $direction
         ]);
+        $res = $pay->fetch()->somme;
+        $paid = ($res == null) ? 0 : $res;
 
-        $data = $query_execute->fetchAll();
-        for ($i = 0; $i < sizeof($data); $i++) {
-            $matricule = $data[$i]->matricule;
-            $pupil_payments_infos = queryDB(self::$reqGetPupilPaymentsInfos, ['matr' => $matricule, 'anasco' => '2017-2018']);
-            $sumPupilsArray=$pupil_payments_infos->fetchAll();
-            $ctrPayPupil=0;
-            for ($x=0; $x <sizeof($sumPupilsArray) ; $x++) { 
-                $ctrPayPupil+=$sumPupilsArray[$x]->amount_payed;
-            }
-           
-            $pupil_infos[$i] = [
-                'id' => $data[$i]->id,
-                'matricule' => $matricule,
-                'name_pupil' => $data[$i]->name_pupil,
-                'gender' => $data[$i]->gender,
-                'level' => $data[$i]->level,
-                'section' => $data[$i]->section,
-                'payinfo' => $sumPupilsArray,
-                'totalSlice'=>intval($result[0]->totalSlice),
-                'totalPupil'=>$ctrPayPupil,
-                'difference'=>intval($result[0]->totalSlice)-$ctrPayPupil,
-                'statut'=>(intval($result[0]->totalSlice)-$ctrPayPupil==0?'Solvable':'Insolvable')
-            ];
+        $remaining = bcsub($amount,$paid,2);
+        if($amount > $paid){
+          $insolventList[] = [
+            'matricule' =>  $pupil->_MAT,
+            'pupilname' =>  $pupil->_NAME,
+            'sumpaid'   =>  $paid,
+            'remaining' =>  bcsub($amount,$paid,2)
+          ];
         }
 
-        return json_encode($pupil_infos);
-    }
-    public static function getActualPupilsPaymentsList() {
-        $db = getDB($_SESSION['dblog']);
-        
-        $query_execute = $db->prepare(self::$reqSumTotalSliceByYear);
-        $query_execute->execute
-                (
-                array
-                    (
-                    'year' => $_SESSION['anasco']
-                )
-        );
-        $result= $query_execute->fetchAll(PDO::FETCH_OBJ);
-        $query_execute = queryDB(self::$reqGetActualPupilsPaymentsList, [
-            'department' => $_SESSION['direction'],
-            'year' => $_SESSION['anasco']
-        ]);
+        $pupilsCounter++;
+      }
+      $db->commit();
 
-        $data = $query_execute->fetchAll();
-        $response = json_encode($data);
-        for ($i = 0; $i < sizeof($data); $i++) {
-            $matricule = $data[$i]->matricule;
-            $pupil_payments_infos = queryDB(self::$reqGetPupilPaymentsInfos, ['matr' => $matricule, 'anasco' => $_SESSION['anasco']]);
-           $sumPupilsArray=$pupil_payments_infos->fetchAll();
-           $ctrPayPupil=0;
-           for ($x=0; $x <sizeof($sumPupilsArray) ; $x++) { 
-               $ctrPayPupil+=$sumPupilsArray[$x]->amount_payed;
-           }
-            $array_paie[$i] = [
-                'id' => $data[$i]->id,
-                'matricule' => $matricule,
-                'name_pupil' => $data[$i]->name_pupil,
-                'gender' => $data[$i]->gender,
-                'level' => $data[$i]->level,
-                'section' => $data[$i]->section,
-                'payinfo' => $sumPupilsArray,
-                'totalSlice'=>intval($result[0]->totalSlice),
-                'totalPupil'=>$ctrPayPupil,
-                'difference'=>intval($result[0]->totalSlice)-$ctrPayPupil,
-                'statut'=>(intval($result[0]->totalSlice)-$ctrPayPupil==0?'Solvable':'Insolvable')
-            ];
-        }
-        // echo 'Anne: '. $_SESSION['anasco'];
-        return json_encode($array_paie);
+      return json_encode([
+        'insolventList' =>  $insolventList,
+        'termAmount' =>  $amount,
+        'insolventsCounter' =>  sizeof($insolventList),
+        'pupilsCounter' =>  $pupilsCounter,
+        'withError'  =>  false
+      ]);
+
+    } catch (\Exception $e) {
+      $db->rollBack();
+      return json_encode([
+        'exception' =>  $e->getMessage(),
+        'line' =>  $e->getLine(),
+        'withError'  =>  true
+      ]);
     }
 
-    public function getFees() {
-        $db = getDB($_SESSION['dblog']);
-        $query = "SELECT * FROM t_school_fees WHERE _STATUS=:status";
-        $query_execute = $db->prepare($query);
-        $query_execute->execute
-                (
-                array
-                    (
-                    'status' => 'active'
-                )
-        );
-        return $query_execute->fetchAll(PDO::FETCH_OBJ);
+  }
+
+  public function getListOfYears() {
+    $query = "SELECT * FROM t_years_school ORDER BY year DESC LIMIT 0,3";
+    $query_execute = parent::DB()->prepare($query);
+    $query_execute->execute();
+    $response = $query_execute->fetchAll();
+    return $response;
+  }
+
+  public function getDailyIncome($year,$day,$direction){
+    try {
+      $db = parent::db();
+      $db->beginTransaction();
+
+      $query = "SELECT _datepay, SUM(_amount) AS recette, _codeterm AS trimestre FROM t_payment WHERE _datepay = :day AND _anasco = :anasco AND _department = :direction GROUP BY _codeterm";
+      $query_execute = $db->prepare($query);
+      $query_execute->execute([
+        'day'       => $day,
+        'anasco'    => $year,
+        'direction' => $direction
+      ]);
+
+      $queryPayLines = "SELECT pupil._MAT AS matricule,UPPER(pupil._NAME) AS pupil_name, pay._IDPAY AS id_pay, term._LABELTERM AS term,pay._AMOUNT AS amount_payed, LOWER(CONCAT(sub._CODE_CLASS,'è ',sub._CODE_SECTION)) AS class,agent._NAME AS percepteur
+                      FROM t_students pupil JOIN t_subscription sub ON pupil._MAT=sub._MATR_PUPIL
+                      JOIN t_payment pay ON pay._MATR=pupil._MAT
+                      JOIN t_terms term ON term._CODETERM=pay._CODETERM
+                      JOIN t_login user ON user._USERNAME=pay._USER_AGENT
+                      JOIN t_agent agent ON agent._MATR=user._MATR_AGENT
+                      WHERE _datepay = :day AND pay._anasco = :anasco AND pay._department = :direction";
+      $execPayLines = $db->prepare($queryPayLines);
+      $execPayLines->execute([
+        'day'       => $day,
+        'anasco'    => $year,
+        'direction' => $direction
+      ]);
+      $PayLines = $execPayLines->fetchAll();
+
+      $totalGlobal = 0;
+      $response = [];
+      $label = "";
+      while ($data = $query_execute->fetch()) {
+        $totalGlobal += $data->recette;
+        if($data->trimestre == "1TRIM")
+          $label = "Premier trimestre";
+        elseif($data->trimestre == "2TRIM")
+          $label = "Deuxième trimestre";
+        elseif($data->trimestre == "3TRIM")
+          $label = "Troisième trimestre";
+        $response[] = [
+          'recette'   =>  $data->recette,
+          'trim'      =>  $label
+        ];
+      }
+
+      $db->commit();
+
+      return json_encode([
+        'totalGlobal'    =>  $totalGlobal,
+        'totalbyTerm'    =>  $response,
+        'payLines'  =>  $PayLines,
+        'withError'  =>  false,
+      ]);
+
+    } catch (\Exception $e) {
+      $db->rollBack();
+      return json_encode([
+        'content' =>  $e->getMessage(),
+        'withError'  =>  true
+      ]);
     }
+  }
+  public function getMonthlyIncome($start,$end,$year,$direction){
+    try {
+      $db = parent::db();
+      $db->beginTransaction();
 
-    public static function addPayment($data) {
-        $db = getDB($_SESSION['dblog']);
-        $payGenerate = "PAY-" . time();
+      $query = "SELECT SUM(_amount) AS recette, _codeterm AS trimestre FROM t_payment WHERE _datepay BETWEEN :startperiod AND :endperiod AND _anasco = :anasco AND _department = :direction GROUP BY _codeterm";
+      $query_execute = $db->prepare($query);
+      $query_execute->execute([
+        'startperiod' => $start,
+        'endperiod'   => $end,
+        'anasco'      => $year,
+        'direction'   => $direction
+      ]);
 
-        $resultSliceInfos = queryDB(self::$reqGetSliceInfos, [$data['slice']]);
+      $queryPayLines = "SELECT pupil._MAT AS matricule,UPPER(pupil._NAME) AS pupil_name, pay._IDPAY AS id_pay, term._LABELTERM AS term,pay._AMOUNT AS amount_payed, LOWER(CONCAT(sub._CODE_CLASS,'è ',sub._CODE_SECTION)) AS class,agent._NAME AS percepteur
+                      FROM t_students pupil JOIN t_subscription sub ON pupil._MAT=sub._MATR_PUPIL
+                      JOIN t_payment pay ON pay._MATR=pupil._MAT
+                      JOIN t_terms term ON term._CODETERM=pay._CODETERM
+                      JOIN t_login user ON user._USERNAME=pay._USER_AGENT
+                      JOIN t_agent agent ON agent._MATR=user._MATR_AGENT
+                      WHERE _datepay BETWEEN :startperiod AND :endperiod AND pay._anasco = :anasco AND pay._department = :direction";
+      $execPayLines = $db->prepare($queryPayLines);
+      $execPayLines->execute([
+        'startperiod' => $start,
+        'endperiod'   => $end,
+        'anasco'      => $year,
+        'direction'   => $direction
+      ]);
+      $PayLines = $execPayLines->fetchAll();
 
-        if ($resultSliceInfos == TRUE) {
-
-            $ds = $resultSliceInfos->fetchAll();
-            $sliceInfos = $ds[0];
-            $resultInsert = queryDB(self::$reqInsertPay, [
-                'idpay' => $payGenerate,
-                'matr' => $data['mat_pupil'],
-                'codeslice' => $data['slice'],
-                'objectpay' => $sliceInfos->_CODE_FEES,
-                'datepay' => date('d/m/Y'),
-                'timepay' => date('H:i:s'),
-                'amount' => $data['amount'],
-                'anasco' => $_SESSION['anasco'],
-                'user' => $_SESSION['uid'],
-                'department' => $_SESSION['direction']
-            ]);
-
-            $result = queryDB(self::$getSliceSumPaidByPupil, [$data['slice'], $data['mat_pupil']]);
-            $sliceSumPaid = $result->fetch();
-
-            if ($resultInsert == TRUE) {
-                //varaibles for the invoice data here
-                $remaining_amount = $sliceInfos->_AMOUNT - $sliceSumPaid->sum_slice_paid;
-
-                $_SESSION['namePupil'] = $data['name_pupil'];
-                $_SESSION['idpay'] = $payGenerate;
-                $_SESSION['level'] = ($data['level'] == 1) ? $data['level'] . "ère " . $data['section'] : $data['level'] . "ème " . $data['section'];
-                $_SESSION['amount'] = $data['amount'];
-                $_SESSION['motifPay'] = $sliceInfos->_LABELSLICE . "/" . $sliceInfos->_OBJECT_PAY;
-                $_SESSION['remaining_amount'] = $remaining_amount;
-
-                $result = 1;
-            } else {
-
-                $result = 0;
-            }
-        } else {
-
-            $result = 0;
-        }
-
-        echo $result;
+      $totalGlobal = 0;
+      $response = [];
+      $label = "";
+      while ($data = $query_execute->fetch()) {
+        $totalGlobal += $data->recette;
+        if($data->trimestre == "1TRIM")
+          $label = "Premier trimestre";
+        elseif($data->trimestre == "2TRIM")
+          $label = "Deuxième trimestre";
+        elseif($data->trimestre == "3TRIM")
+          $label = "Troisième trimestre";
+        $response[] = [
+          'recette' =>  $data->recette,
+          'trim'    =>  $label
+        ];
+      }
+      $db->commit();
+      return json_encode([
+        'totalGlobal'    =>  $totalGlobal,
+        'totalbyTerm'    =>  $response,
+        'payLines'  =>  $PayLines,
+        'withError'  =>  false,
+      ]);
+    } catch (\Exception $e) {
+      $db->rollBack();
+      return json_encode([
+        'content' =>  $e->getMessage(),
+        'withError'  =>  true
+      ]);
     }
-
-    public static function loadSlicesList() {
-        $query = "SELECT _CODESLICE, _LABELSLICE FROM t_slice_payment LIMIT 0,4";
-        $result = queryDB($query);
-
-        $json = [];
-        while ($data = $result->fetch()) {
-            $json[$data->_CODESLICE][] = $data->_LABELSLICE;
-        }
-
-        // envoi du résultat au success
-        echo json_encode($json);
-    }
-
-    public static function getPaymentsCustomized($param) {
-
-
-        $level = $param['level'];
-        $option = $param['option'];
-        $year = $param['year'];
-        $departement = $param['departement'];
-        $frais = $param['frais'];
-
-
-        $hasSlice = ($frais == "all") ? "" : "AND payment._CODE_SLICE=:frais ";
-
-        $Query = "SELECT pupils._MAT,pupils._NAME,pupils._SEX,payment._AMOUNT,payment._IDPAY,payment._DATEPAY,payment._TIMEPAY, payment._USER_AGENT
-        FROM t_payment payment
-        JOIN t_students pupils ON payment._MATR=pupils._MAT
-          JOIN t_subscription subscript ON pupils._MAT=subscript._MATR_PUPIL
-          WHERE subscript._ANASCO=:year AND payment._ANASCO=:year ". $hasSlice ."AND subscript._CODE_CLASS=:level AND subscript._CODE_SECTION=:option
-          AND payment._DEPARTMENT=:departement ORDER BY payment._DATEPAY DESC";
-        $db = getDB($_SESSION['dblog']);
-        $sql_prepare = $db->prepare($Query);
-        $sql_prepare->execute(
-                array(
-                    "year" => $year,
-                    "frais" => $frais,
-                    "level" => $level,
-                    "option" => $option,
-                    "departement" => $departement
-                )
-        );
-        $response = $sql_prepare->fetchAll();
-
-        $Query = "SELECT count(DISTINCT(students._MAT)) AS COUNTER FROM t_students students JOIN t_payment payment ON students._MAT =payment._MATR" .
-                " JOIN t_subscription subscript ON students._MAT=subscript._MATR_PUPIL" .
-                " WHERE payment._ANASCO=:year AND subscript._CODE_CLASS=:level AND subscript._CODE_SECTION=:option AND payment._DEPARTMENT=:departement";
-
-        $sql_prepare = $db->prepare($Query);
-        $sql_prepare->execute(
-                array(
-                    "year" => $year,
-                    "level" => $level,
-                    "option" => $option,
-                    "departement" => $departement
-                )
-        );
-        $rowers_response = $sql_prepare->fetchAll();
-
-        $tabPay = array();
-        $tabCustomized = [];
-        foreach ($response as $key => $value) {
-            $tabPay[$key] = [
-                "_MAT" => $value->_MAT,
-                "_NAME" => $value->_NAME,
-                "_SEX" => $value->_SEX,
-                "_AMOUNT" => $value->_AMOUNT,
-                "_IDPAY" => $value->_IDPAY,
-                "_DATEPAY" => $value->_DATEPAY,
-                "_TIMEPAY" => $value->_TIMEPAY,
-                "_AGENT" => $value->_USER_AGENT
-            ];
-        }
-        $tabCustomized["pupils"] = $tabPay;
-        $tabCustomized["counter"] = $rowers_response;
-        return json_encode($tabCustomized);
-    }
+  }
 
 }

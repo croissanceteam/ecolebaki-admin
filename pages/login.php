@@ -3,7 +3,7 @@
   include_once '../controllers/TaskLogger.php';
 ?>
 <?php
- if(!isset($_SESSION['uid'])){
+ if(!isset($_SESSION['usrid'])){
 ?>
 
 <!DOCTYPE html>
@@ -55,17 +55,24 @@
             <div class="col-md-4 col-md-offset-4">
                  <?php
              if ($_SERVER['REQUEST_METHOD']=='POST') {
-                $response_logger= getLogger();
-              switch ($response_logger) {
-                  case 0:
-                            echo "<div class=\"alert alert-danger\" style=\"position: relative;top:5em;text-align: center;\"> Nom utilisateur ou mot de passe incorrect</div>";
-                      break;
-
-                  default:
-
-
-                      break;
-              }
+               try {
+                 $response_logger= getLogger();
+                 switch ($response_logger) {
+                     case 0:
+                        echo "<div class=\"alert alert-danger\" style=\"position: relative;top:5em;text-align: center;\"> Nom utilisateur ou mot de passe incorrect</div>";
+                        break;
+                    case 2:
+                       echo "<div class=\"alert alert-danger\" style=\"position: relative;top:5em;text-align: center;\"> Accès refusé</div>";
+                       break;
+                     case 6:
+                        echo "<div class=\"alert alert-danger\" style=\"position: relative;top:5em;text-align: center;\"> Ce compte est verrouilé. <br>Veuillez contacter l'administrateur</div>";
+                        break;
+                     default:
+                        break;
+                 }
+               } catch (\Exception $e) {
+                  echo "<div class=\"alert alert-danger\" style=\"position: relative;top:5em;text-align: center;\">Echec</div>";
+               }
             }
             ?>
                 <div style="text-align:center;">
@@ -76,30 +83,31 @@
                         <h3 class="panel-title">
                             Connectez-vous
                             <i id="iu" class="fa fa-user"></i>
-
                         </h3>
                     </div>
                     <div class="panel-body">
                         <form role="form" method="post" name="frm" ng-submit="send()" id="form">
                             <fieldset>
                                 <div class="form-group">
-                                    <label for="user">Username:</label>
-                                    <input id="user" class="form-control" placeholder="username" name="user" type="text" autofocus required ng-model="user.name">
+                                    <label class="hidden" for="user">Nom d'utilisateur</label>
+                                    <input class="form-control" placeholder="Nom d'utilisateur" id="user" name="user" type="text" autofocus required ng-model="user.name">
                                 </div>
                                 <div class="form-group">
-                                <label for="pwd">PassWord:</label>
-                                    <input class="form-control" placeholder="Password" id="pwd" name="pwd" type="password" value="" required ng-model="user.password">
+                                <label class="hidden" for="pwd">Mot de passe</label>
+                                    <input class="form-control" placeholder="Mot de passe" id="pwd" name="pwd" type="password" value="" required ng-model="user.password">
                                 </div>
 
                                  <div class="form-group">
-                                        <label for="sel1">Instance Database:</label>
-                                        <select class="form-control" name="dblog" id="sel1" ng-model="user.instancedb">
+                                        <label class="hidden" for="sel1">Instance</label>
+                                        <select class="form-control" name="instance" id="sel1" ng-model="user.instancedb" required>
+
                                             <option></option>
-                                            <option>Kimbanseke</option>
-                                            <option>Ndjili</option>
+                                            <option>Test</option>
                                             <option>Yolo</option>
+                                            <option disabled>Kimbanseke</option>
+                                            <option disabled>N'djili</option>
                                         </select>
-                                </div> 
+                                </div>
                                 <div class="checkbox" style="display:none">
                                     <label>
                                         <input name="remember" type="checkbox" value="Remember Me">Remember Me
